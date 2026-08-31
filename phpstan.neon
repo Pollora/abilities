@@ -1,0 +1,18 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - vendor/*
+    ignoreErrors:
+        # WordPress is not a dependency of this package: the Abilities API is
+        # called through function_exists() guards in the adapters, and stubbed by
+        # Brain Monkey in the tests.
+        - '#Function wp_[a-z_]+ not found#'
+        - '#Call to an undefined method Mockery\\ExpectationInterface\|Mockery\\HigherOrderMessage::[a-zA-Z0-9_]+\(\).#'
+        # Pest binds $this to the test case at runtime and lets a beforeEach()
+        # set properties on it, which no static analysis can see declared.
+        - '#Undefined variable: \$this#'
+        - '#Access to an undefined property PHPUnit\\Framework\\TestCase::\$[a-zA-Z0-9_]+.#'
+    reportUnmatchedIgnoredErrors: false

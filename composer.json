@@ -1,0 +1,67 @@
+{
+    "name": "pollora/abilities",
+    "description": "A modern PHP package for the WordPress Abilities API, with a fluent declaration API and a hexagonal architecture",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "wordpress",
+        "abilities",
+        "abilities-api",
+        "ai",
+        "mcp"
+    ],
+    "authors": [
+        {
+            "name": "Amphibee",
+            "email": "contact@amphibee.fr"
+        }
+    ],
+    "require": {
+        "php": "^8.3"
+    },
+    "require-dev": {
+        "brain/monkey": "^2.6",
+        "laravel/pint": "^1.22",
+        "mockery/mockery": "^1.6",
+        "pestphp/pest": "^3.8",
+        "phpstan/phpstan": "^2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pollora\\Abilities\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Pollora\\Abilities\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "test": [
+            "@test:unit",
+            "@phpstan",
+            "@lint:check"
+        ],
+        "test:coverage": "pest --coverage",
+        "test:unit": "pest --testsuite=Unit",
+        "phpstan": "phpstan analyse",
+        "phpstan:ci": "phpstan analyse --no-progress",
+        "lint": "pint",
+        "lint:check": "pint --test"
+    },
+    "scripts-descriptions": {
+        "test": "Run the whole quality gate as CI does",
+        "test:unit": "Run the Pest unit test suite",
+        "phpstan": "Run PHPStan static analysis",
+        "lint": "Apply Laravel Pint code style fixes",
+        "lint:check": "Verify code style without writing"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
