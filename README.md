@@ -1,10 +1,21 @@
-# Pollora Abilities
+<p align="center">
+  <a href="https://pollora.dev">
+    <img src="https://raw.githubusercontent.com/Pollora/.github/main/brand/banners/abilities.png" width="100%" alt="Pollora Abilities: declare WordPress abilities for AI agents and automation">
+  </a>
+</p>
 
-A Laravel-flavoured API over the [WordPress Abilities API](https://make.wordpress.org/core/2025/11/10/abilities-api-in-wordpress-6-9/),
+<p align="center">
+  <a href="https://packagist.org/packages/pollora/abilities"><img src="https://img.shields.io/packagist/v/pollora/abilities" alt="Latest version"></a>
+  <a href="https://packagist.org/packages/pollora/abilities"><img src="https://img.shields.io/packagist/dt/pollora/abilities" alt="Total downloads"></a>
+  <a href="https://github.com/Pollora/abilities/actions/workflows/tests.yml"><img src="https://github.com/Pollora/abilities/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Pollora/abilities" alt="License"></a>
+</p>
+
+A Laravel-flavored API over the [WordPress Abilities API](https://make.wordpress.org/core/2025/11/10/abilities-api-in-wordpress-6-9/),
 introduced in WordPress 6.9.
 
 An *ability* is a unit of functionality a site publishes in a machine-readable
-form — inputs, outputs, permissions, behaviour — so that AI agents and automation
+form — inputs, outputs, permissions, behavior — so that AI agents and automation
 tools can discover and invoke it. This package is how you declare one without
 writing registration boilerplate, and without scattering `wp_register_ability()`
 calls through your codebase.
@@ -14,21 +25,9 @@ It knows nothing about MCP. MCP is one *consumer* of abilities, served by the
 registered here are published to it, and to the core abilities REST controllers,
 without this package taking part.
 
----
+> Part of [Pollora](https://pollora.dev), the Laravel framework for WordPress. In a Pollora project it is already installed: use the `Ability` facade or the `#[Ability]` attribute instead — see [In a Pollora project](#in-a-pollora-project).
 
-## Requirements
-
-| | |
-|---|---|
-| PHP | 8.3 or later |
-| WordPress | 6.9 or later, for the Abilities API in core |
-
-On an older WordPress the package is inert: declarations are accepted and simply
-never published, because there is nowhere to put them.
-
----
-
-## Install
+## Installation
 
 ```bash
 composer require pollora/abilities
@@ -38,7 +37,15 @@ In a [Pollora](https://github.com/Pollora/framework) project the framework
 already requires it and wires everything up — see **In a Pollora project** below.
 Everything above that section is framework-agnostic.
 
----
+Requirements:
+
+| | |
+|---|---|
+| PHP | 8.3 or later |
+| WordPress | 6.9 or later, for the Abilities API in core |
+
+On an older WordPress the package is inert: declarations are accepted and simply
+never published, because there is nowhere to put them.
 
 ## Declaring an ability
 
@@ -81,7 +88,7 @@ add_action('wp_abilities_api_init', $service->flushAbilities(...));
 ```
 
 That two-phase split is not ceremony. Abilities are declared wherever it is
-natural to write them, which is almost always before WordPress has initialised
+natural to write them, which is almost always before WordPress has initialized
 its registry; registering early registers nothing, and registering late misses
 the request.
 
@@ -132,9 +139,9 @@ $abilities->handle(
 );
 ```
 
----
+## Behavior
 
-## Behaviour
+The `Behaviour` enum and the `behaviour:` argument keep their British spelling in code.
 
 Every ability declares what it does to the site. WordPress publishes this under
 `meta.annotations`, and consumers turn it into the `readOnlyHint`,
@@ -154,8 +161,6 @@ as one of four shapes rather than three loose booleans.
 **They are advisory.** WordPress does not enforce them. The permission callback
 is what protects the site — and it defaults to refusing, so an ability that
 forgets to declare one is inert rather than open.
-
----
 
 ## Input
 
@@ -182,8 +187,6 @@ empty value, `filled()` is not — because callers routinely send empty strings 
 properties they mean to leave alone, and treating those as present produces empty
 search terms and cleared taxonomies. Use `has()` where "explicitly zero" differs
 from "not mentioned".
-
----
 
 ## Schema
 
@@ -213,8 +216,6 @@ sizes a query, so a model cannot ask for every row in the table.
 
 `output()` is available and optional. Declare it where the shape is stable — it
 lets a client validate what it got instead of trusting it.
-
----
 
 ## In a Pollora project
 
@@ -255,8 +256,6 @@ The category is declared for you if nobody declared it — a slug with no catego
 would otherwise make the ability vanish without a word — and an explicit
 `Ability::category()` always wins, whichever ran first.
 
----
-
 ## Things worth knowing
 
 **Names are `namespace/slug`.** A bare slug registers nothing, and WordPress
@@ -277,8 +276,6 @@ is derived from the label when you leave it out.
 **Queueing the same ability name twice keeps the first.** A host that runs its
 discovery once per scan location would otherwise build a queue of near-identical
 entries, all but one of them dead on arrival.
-
----
 
 ## Architecture
 
@@ -302,19 +299,23 @@ src/
 Substituting the ports is how the domain stays testable without WordPress
 loaded, and how a project could publish the same declarations somewhere else.
 
----
-
 ## Development
 
 ```bash
 composer test          # pest, phpstan (level 8), pint --test
-composer test:unit
-composer analyse
-composer lint
+composer test:unit     # pest only
+composer phpstan       # static analysis
+composer lint          # apply Pint
 ```
 
----
+## Documentation
 
-## Licence
+Abilities in a Pollora project, with permissions and input schemas: [Abilities](https://pollora.dev/advanced/abilities/).
 
-MIT.
+## Contributing
+
+Contributions are welcome: see the [contributing guide](https://github.com/Pollora/.github/blob/main/CONTRIBUTING.md). Report security issues privately, as described in the [security policy](https://github.com/Pollora/.github/blob/main/SECURITY.md).
+
+## License
+
+Pollora Abilities is open-source software licensed under the [MIT license](LICENSE). © [RuBee group](https://rubee.group)
