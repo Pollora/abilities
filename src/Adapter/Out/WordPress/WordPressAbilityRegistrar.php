@@ -62,7 +62,7 @@ final class WordPressAbilityRegistrar implements AbilityRegistrarPort
             $arguments['output_schema'] = $ability->outputSchema;
         }
 
-        return \wp_register_ability($ability->name, $arguments) !== null;
+        return \wp_register_ability($ability->name, $arguments) !== null; // @phpstan-ignore argument.type (name validated by Ability::create())
     }
 
     /**
