@@ -50,7 +50,7 @@ final class PendingAbility
     /**
      * Builder holding the declared input properties.
      */
-    private SchemaBuilder $schema;
+    private readonly SchemaBuilder $schema;
 
     /**
      * JSON Schema of the returned value, or null to leave the output undescribed.
