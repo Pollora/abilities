@@ -174,3 +174,34 @@ describe('AbilityCategory description', function (): void {
             ->toBe('Posts and pages.');
     });
 });
+
+describe('exact validation', function (): void {
+    it('refuses a whitespace-only description or category', function (string $property): void {
+        expect(fn () => makeAbility([$property => "  \t "]))
+            ->toThrow(InvalidAbilityException::class, sprintf('cannot be registered without a %s.', $property));
+    })->with(['description', 'category']);
+
+    it('names the ability and the missing label in full', function (): void {
+        expect(fn () => makeAbility(['label' => '']))
+            ->toThrow(InvalidAbilityException::class, 'Ability "acme/get-posts" cannot be registered without a label.');
+    });
+
+    it('trims the category slug and refuses an empty one with the full message', function (): void {
+        expect(AbilityCategory::make('  acme-content  ')->slug)->toBe('acme-content');
+        expect(fn () => AbilityCategory::make('   '))
+            ->toThrow(InvalidAbilityException::class, 'Ability "(category)" cannot be registered without a slug.');
+        expect(fn () => AbilityCategory::make(''))
+            ->toThrow(InvalidAbilityException::class, 'Ability "(category)" cannot be registered without a slug.');
+    });
+
+    it('treats a whitespace-only label or description as absent', function (): void {
+        $category = AbilityCategory::make('acme-content', "  \t ", '   ');
+
+        expect($category->label)->toBe('Acme Content')
+            ->and($category->description)->toBe('Acme Content abilities.');
+    });
+
+    it('derives the description from an explicit label when only the description is blank', function (): void {
+        expect(AbilityCategory::make('acme-content', 'Editorial', '  ')->description)->toBe('Editorial abilities.');
+    });
+});

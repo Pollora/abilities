@@ -225,3 +225,15 @@ describe('AbilityFactory', function (): void {
         expect($this->factory->service())->toBe($this->service);
     });
 });
+
+describe('AbilityFactory with a bare name', function (): void {
+    it('reports a malformed name rather than failing while deriving the label', function (): void {
+        $factory = new AbilityFactory(new RegisterAbilityService(new RecordingAbilityRegistrar, new RecordingCategoryRegistrar));
+
+        expect(fn () => $factory->define('bare')
+            ->description('Returns posts.')
+            ->category('acme-content')
+            ->using(static fn (Input $input): array => []))
+            ->toThrow(InvalidAbilityException::class, 'Ability name "bare" is malformed');
+    });
+});

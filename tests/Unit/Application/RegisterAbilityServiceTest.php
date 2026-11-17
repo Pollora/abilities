@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Pollora\Abilities\Application\Service\RegisterAbilityService;
 use Pollora\Abilities\Domain\Model\AbilityCategory;
 use Pollora\Abilities\Domain\Model\Behaviour;
+use Pollora\Abilities\Port\Out\AbilityCategoryRegistrarPort;
 
 describe('RegisterAbilityService', function (): void {
     beforeEach(function (): void {
@@ -173,5 +174,31 @@ describe('RegisterAbilityService duplicate handling', function (): void {
         $this->service->queue(anAbility('acme/two'));
 
         expect($this->service->flushAbilities())->toBe(['acme/one', 'acme/two']);
+    });
+});
+
+describe('RegisterAbilityService::ensureCategory against a registrar that cannot see our own publications', function (): void {
+    it('remembers what it published itself', function (): void {
+        // The registrar here reports nothing as existing, so the only memory of
+        // the publication is the service's own list.
+        $blind = new class implements AbilityCategoryRegistrarPort
+        {
+            public function register(AbilityCategory $category): bool
+            {
+                return true;
+            }
+
+            public function exists(string $slug): bool
+            {
+                return false;
+            }
+        };
+        $service = new RegisterAbilityService(new RecordingAbilityRegistrar, $blind);
+
+        $service->ensureCategory(AbilityCategory::make('acme-content'));
+        $service->flushCategories();
+
+        expect($service->ensureCategory(AbilityCategory::make('acme-content')))->toBeFalse()
+            ->and($service->pendingCategories())->toBe([]);
     });
 });

@@ -136,3 +136,84 @@ describe('Input', function (): void {
         });
     });
 });
+
+/**
+ * Run a callback with every PHP warning and notice raised as an exception.
+ *
+ * Reading an input must never emit one: a warning on a production request is
+ * log noise at best and a visible error at worst.
+ *
+ * @param  Closure(): mixed  $callback  The code to run.
+ * @return mixed What the callback returned.
+ */
+function withoutPhpWarnings(Closure $callback): mixed
+{
+    set_error_handler(static function (int $severity, string $message): never {
+        throw new ErrorException($message, 0, $severity);
+    });
+
+    try {
+        return $callback();
+    } finally {
+        restore_error_handler();
+    }
+}
+
+describe('Input exactness', function (): void {
+    it('returns the default for an empty string and for an absent key, without a warning', function (): void {
+        $input = Input::wrap(['empty' => '']);
+
+        expect(withoutPhpWarnings(fn (): string => $input->string('empty', 'fallback')))->toBe('fallback')
+            ->and(withoutPhpWarnings(fn (): string => $input->string('absent', 'fallback')))->toBe('fallback');
+    });
+
+    it('exposes the values it was given, whole', function (): void {
+        expect(Input::wrap(['title' => 'Hello', 'limit' => 3])->all())->toBe(['title' => 'Hello', 'limit' => 3]);
+    });
+
+    it('falls back for a non-numeric float rather than coercing it to zero', function (): void {
+        expect(Input::wrap(['score' => 'high'])->float('score', 0.5))->toBe(0.5)
+            ->and(Input::wrap(['score' => []])->float('score', 0.5))->toBe(0.5);
+    });
+
+    it('applies a float lower bound only when one is given', function (): void {
+        $input = Input::wrap(['score' => -5.0]);
+
+        expect($input->float('score', min: 1.0))->toBe(1.0)
+            ->and($input->float('score'))->toBe(-5.0)
+            ->and($input->float('score', min: -5.0))->toBe(-5.0)
+            ->and($input->float('score', min: -9.0))->toBe(-5.0);
+    });
+
+    it('applies an integer lower bound only when one is given', function (): void {
+        $input = Input::wrap(['limit' => -5]);
+
+        expect($input->integer('limit', min: 1))->toBe(1)
+            ->and($input->integer('limit'))->toBe(-5)
+            ->and($input->integer('limit', min: -5))->toBe(-5)
+            ->and($input->integer('limit', min: -9))->toBe(-5);
+    });
+
+    it('stringifies numeric and boolean list items instead of dropping or rejecting them', function (): void {
+        expect(Input::wrap(['tags' => [12, 1.5, true, ' a ']])->stringList('tags'))->toBe(['12', '1.5', '1', 'a']);
+    });
+
+    it('reindexes a string list that had gaps', function (): void {
+        expect(Input::wrap(['tags' => [3 => 'a', 7 => '', 9 => 'b']])->stringList('tags'))->toBe(['a', 'b']);
+    });
+
+    it('returns an empty list for a non-array without a warning', function (mixed $raw): void {
+        $input = Input::wrap(['ids' => $raw]);
+
+        expect(withoutPhpWarnings(fn (): array => $input->idList('ids')))->toBe([])
+            ->and(withoutPhpWarnings(fn (): array => $input->stringList('ids')))->toBe([])
+            ->and(withoutPhpWarnings(fn (): array => $input->map('ids')))->toBe([]);
+    })->with([['news'], [''], [null], [42], [true]]);
+
+    it('returns an empty list for an absent key without a warning', function (): void {
+        $input = Input::wrap([]);
+
+        expect(withoutPhpWarnings(fn (): array => $input->idList('ids')))->toBe([])
+            ->and(withoutPhpWarnings(fn (): array => $input->stringList('ids')))->toBe([]);
+    });
+});
