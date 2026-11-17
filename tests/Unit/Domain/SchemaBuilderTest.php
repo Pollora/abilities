@@ -169,3 +169,39 @@ describe('SchemaBuilder', function (): void {
         expect($schema['properties']['title'])->not->toHaveKey('default');
     });
 });
+
+describe('SchemaBuilder exactness', function (): void {
+    it('reindexes the values of an enum', function (): void {
+        $schema = (new SchemaBuilder)
+            ->enum('status', 'Publication status.', [3 => 'draft', 7 => 'publish'])
+            ->toArray();
+
+        expect($schema['properties']['status']['enum'])->toBe(['draft', 'publish']);
+    });
+
+    it('renders only the number bounds that were given', function (): void {
+        $schema = (new SchemaBuilder)
+            ->number('floor', 'Floor.', minimum: 0.5)
+            ->number('ceiling', 'Ceiling.', maximum: 2.5)
+            ->number('free', 'Free.')
+            ->toArray();
+
+        expect($schema['properties']['floor'])->toBe(['type' => 'number', 'minimum' => 0.5, 'description' => 'Floor.'])
+            ->and($schema['properties']['ceiling'])->toBe(['type' => 'number', 'maximum' => 2.5, 'description' => 'Ceiling.'])
+            ->and($schema['properties']['free'])->toBe(['type' => 'number', 'description' => 'Free.']);
+    });
+
+    it('builds a boolean with its default', function (): void {
+        $schema = (new SchemaBuilder)
+            ->boolean('draft', 'Keep as a draft.', default: false)
+            ->boolean('flag', 'A flag.')
+            ->toArray();
+
+        expect($schema['properties']['draft'])->toBe([
+            'type' => 'boolean',
+            'description' => 'Keep as a draft.',
+            'default' => false,
+        ])
+            ->and($schema['properties']['flag'])->toBe(['type' => 'boolean', 'description' => 'A flag.']);
+    });
+});
