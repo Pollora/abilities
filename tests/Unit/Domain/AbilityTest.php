@@ -54,6 +54,14 @@ describe('Ability', function (): void {
             '',
         ])->throws(InvalidAbilityException::class);
 
+        it('normalises a trailing line break and refuses an embedded one', function (): void {
+            // trim() strips a trailing "\n" before validation; the pattern is anchored
+            // with D so that a "\n" reaching it is never tolerated by `$`.
+            expect(makeAbility(['name' => "acme/get-posts\n"])->name)->toBe('acme/get-posts');
+            expect(fn () => makeAbility(['name' => "acme/get\n-posts"]))->toThrow(InvalidAbilityException::class);
+            expect(fn () => makeAbility(['name' => "acme\n/get-posts"]))->toThrow(InvalidAbilityException::class);
+        });
+
         it('accepts a well-formed name', function (string $name): void {
             expect(makeAbility(['name' => $name])->name)->toBe($name);
         })->with(['acme/get-posts', 'a/b', 'acme-plugin/set-post-terms', 'wp2/get-posts']);
@@ -145,6 +153,11 @@ describe('AbilityCategory', function (): void {
     it('refuses an empty slug', function (): void {
         AbilityCategory::make('   ');
     })->throws(InvalidAbilityException::class, 'slug');
+
+    it('normalises a trailing line break and refuses an embedded one in a slug', function (): void {
+        expect(AbilityCategory::make("acme-content\n")->slug)->toBe('acme-content');
+        expect(fn () => AbilityCategory::make("acme\ncontent"))->toThrow(InvalidAbilityException::class);
+    });
 
     it('refuses a malformed slug', function (string $slug): void {
         AbilityCategory::make($slug);

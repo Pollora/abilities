@@ -88,7 +88,7 @@ final readonly class Ability
 
         // WordPress requires `namespace/slug`; a bare slug registers nothing and
         // reports it through _doing_it_wrong(), which is easy to miss.
-        if (preg_match('#^[a-z0-9]+(?:-[a-z0-9]+)*/[a-z0-9]+(?:-[a-z0-9]+)*$#', $name) !== 1) {
+        if (preg_match('#^[a-z0-9]+(?:-[a-z0-9]+)*/[a-z0-9]+(?:-[a-z0-9]+)*$#D', $name) !== 1) {
             throw InvalidAbilityException::malformedName(
                 $name,
                 'expected "namespace/slug", lowercase alphanumerics separated by single dashes',

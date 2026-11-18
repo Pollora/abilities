@@ -50,7 +50,7 @@ final readonly class AbilityCategory
             throw InvalidAbilityException::missingProperty('(category)', 'slug');
         }
 
-        if (preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $slug) !== 1) {
+        if (preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $slug) !== 1) {
             throw InvalidAbilityException::malformedName(
                 $slug,
                 'a category slug must be lowercase alphanumerics separated by single dashes',
