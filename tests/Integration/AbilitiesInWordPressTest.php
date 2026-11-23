@@ -19,6 +19,11 @@ use Pollora\Abilities\Factory\AbilityFactory;
  * outside its hooks.
  */
 beforeEach(function (): void {
+    // WordPress builds each registry, and fires its init action, the first time one is asked for. Doing it here, before
+    // the hooks are snapshotted, keeps that from happening in the middle of a test, whichever test runs first.
+    wp_has_ability_category('wpint-warm-up');
+    wp_has_ability('wpint/warm-up');
+
     $GLOBALS['wpint'] = [
         // WP_Hook objects are changed in place: the snapshot needs copies of them.
         'hooks' => array_map(static fn (WP_Hook $hook): WP_Hook => clone $hook, $GLOBALS['wp_filter']),
@@ -330,6 +335,9 @@ it('is run by the verb WordPress derives from the annotations the behaviour publ
 })->with([
     'reads' => ['reads', 'GET', 'POST'],
     'creates' => ['creates', 'POST', 'GET'],
+    // WordPress runs a destructive and idempotent ability by DELETE, whatever it is called: `updates()` overwrites
+    // data, and the hint tells a client to ask for confirmation first.
+    'updates' => ['updates', 'DELETE', 'POST'],
     'deletes' => ['deletes', 'DELETE', 'POST'],
 ]);
 
@@ -351,4 +359,61 @@ it('lists the abilities in the REST API of WordPress, with the annotations of th
     expect($response->get_status())->toBe(200)
         ->and($response->get_data()['name'])->toBe('wpint/listed')
         ->and($response->get_data()['meta']['annotations'])->toBe(['readonly' => true, 'destructive' => false, 'idempotent' => true]);
+});
+
+it('runs an ability that declares no input, from PHP and from REST, without any input given', function (): void {
+    $factory = wpintAbilities();
+    $factory->category('wpint-content', 'Integration content', 'Abilities of the integration suite.');
+    $factory->define('wpint/no-input')
+        ->label('No input')
+        ->description('Takes nothing and answers.')
+        ->category('wpint-content')
+        ->can(static fn (): bool => true)
+        ->using(static fn (Input $input): array => ['ran' => true]);
+    wpintPublish(['wpint/no-input']);
+
+    wp_set_current_user(1);
+    $GLOBALS['wp_rest_server'] = null;
+    $viaRest = rest_do_request(new WP_REST_Request('GET', '/wp-abilities/v1/abilities/wpint/no-input/run'));
+
+    expect(wpintAbility('wpint/no-input')->execute())->toBe(['ran' => true])
+        ->and($viaRest->get_status())->toBe(200)
+        ->and($viaRest->get_data())->toBe(['ran' => true]);
+});
+
+it('runs an ability whose declared properties are all optional, without any input given', function (): void {
+    $factory = wpintAbilities();
+    $factory->category('wpint-content', 'Integration content', 'Abilities of the integration suite.');
+    $factory->define('wpint/optional')
+        ->label('Optional')
+        ->description('Every property has a default.')
+        ->category('wpint-content')
+        ->input(static function (SchemaBuilder $schema): void {
+            $schema->integer('limit', 'How many.', default: 5);
+        })
+        ->can(static fn (): bool => true)
+        ->using(static fn (Input $input): array => ['limit' => $input->integer('limit', 5)]);
+    wpintPublish(['wpint/optional']);
+
+    expect(wpintAbility('wpint/optional')->execute())->toBe(['limit' => 5]);
+});
+
+it('still refuses a call without input when the ability requires some', function (): void {
+    $factory = wpintAbilities();
+    $factory->category('wpint-content', 'Integration content', 'Abilities of the integration suite.');
+    $factory->define('wpint/needs-input')
+        ->label('Needs input')
+        ->description('Requires a title.')
+        ->category('wpint-content')
+        ->input(static function (SchemaBuilder $schema): void {
+            $schema->string('title', 'The title.', required: true);
+        })
+        ->can(static fn (): bool => true)
+        ->using(static fn (Input $input): array => ['title' => $input->string('title')]);
+    wpintPublish(['wpint/needs-input']);
+
+    $result = wpintAbility('wpint/needs-input')->execute();
+
+    expect($result)->toBeInstanceOf(WP_Error::class)
+        ->and($result->get_error_code())->toBe('ability_invalid_input');
 });

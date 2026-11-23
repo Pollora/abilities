@@ -46,7 +46,7 @@ final class WordPressAbilityRegistrar implements AbilityRegistrarPort
             'label' => $ability->label,
             'description' => $ability->description,
             'category' => $ability->category,
-            'input_schema' => $ability->inputSchema,
+            'input_schema' => $this->inputSchema($ability),
             // The Abilities API hands the raw, schema-validated input straight
             // through. Wrapping it here means no ability body has to defend
             // against a null or a numeric string on its own.
@@ -71,6 +71,33 @@ final class WordPressAbilityRegistrar implements AbilityRegistrarPort
     public function exists(string $name): bool
     {
         return function_exists('wp_has_ability') && \wp_has_ability($name);
+    }
+
+    /**
+     * The input schema as it is published to WordPress.
+     *
+     * A call that carries no input reaches WordPress as `null` (a REST call without
+     * an `input` parameter, or `execute()` without an argument), and WordPress
+     * validates that `null` against the schema: an object schema refuses it with
+     * "input is not of type object". So an ability that declares no property, or
+     * only optional ones, could never be run without passing an empty object.
+     * Declaring `default: []` — what the core abilities do — makes WordPress
+     * substitute an empty input before validating it. It is added only when no
+     * property is required: a required property keeps being reported as missing.
+     * A default the schema already carries is left alone.
+     *
+     * @param  Ability  $ability  The ability being registered.
+     * @return array<string, mixed> The schema to publish.
+     */
+    private function inputSchema(Ability $ability): array
+    {
+        $schema = $ability->inputSchema;
+
+        if (! array_key_exists('default', $schema) && ($schema['required'] ?? []) === []) {
+            $schema['default'] = [];
+        }
+
+        return $schema;
     }
 
     /**

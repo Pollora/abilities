@@ -118,6 +118,25 @@ function anAbility(
 }
 
 /**
+ * An ability with the given input schema, for tests of what is published for it.
+ *
+ * @param  array<string, mixed>  $inputSchema  The object schema.
+ * @return Ability The ability.
+ */
+function anAbilityWithInputSchema(array $inputSchema): Ability
+{
+    return Ability::create(
+        name: 'acme/with-schema',
+        label: 'With schema',
+        description: 'Declares its own input schema.',
+        category: 'acme-content',
+        inputSchema: $inputSchema,
+        execute: static fn (Input $input): array => [],
+        permission: static fn (Input $input): bool => true,
+    );
+}
+
+/**
  * An ability whose body echoes back a property, to observe input wrapping.
  *
  * @return Ability The ability.

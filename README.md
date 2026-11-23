@@ -158,7 +158,14 @@ how much ceremony an invocation deserves.
 Getting these wrong is worse than omitting them, which is why they are declared
 as one of four shapes rather than three loose booleans.
 
-**They are advisory.** WordPress does not enforce them. The permission callback
+**One of them is enforced.** The REST controller of WordPress runs an ability with
+the HTTP method it derives from these hints: `GET` when it is read-only, `DELETE`
+when it is both destructive and idempotent (so `->updates()` and `->deletes()`
+alike), `POST` otherwise. A call with another method is answered with a 405.
+An update is destructive on purpose: it overwrites data, and the hint is what
+tells a client to ask for confirmation first.
+
+**Apart from that, they are advisory.** The permission callback
 is what protects the site — and it defaults to refusing, so an ability that
 forgets to declare one is inert rather than open.
 
