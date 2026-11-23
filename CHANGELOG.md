@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-11-23
+
 ### Fixed
 
 - An ability that declares no `input()`, or only optional properties, can now be run without any input (#30). WordPress validates the `null` of a call without input against the object schema and refused it with "input is not of type object"; the schema is now published with `default: []`, as the core abilities do. It is left out when a property is required, so a missing required property is still reported, and a default the schema already declares is kept. **BREAKING**: the input schema published to WordPress, and so listed by REST and MCP, now carries `"default": []` for such abilities.
