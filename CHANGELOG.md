@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- An integration suite (`tests/Integration`, `composer test:integration`) that registers abilities and categories with the Abilities API of a real WordPress and runs them. It is kept out of the default test run and out of the Composer archive.
+
 ## [1.0.2] - 2026-11-19
 
 ### Security

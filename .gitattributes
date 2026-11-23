@@ -10,3 +10,5 @@
 /pint.json export-ignore
 /rector.php export-ignore
 /tests export-ignore
+# Pollora harness (QA-06): development files stay out of the archive Composer downloads
+/phpunit.integration.xml export-ignore
