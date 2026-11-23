@@ -22,7 +22,36 @@ describe('WordPressAbilityRegistrar', function (): void {
             ->and($call['arguments']['description'])->toBe('Returns the most recent posts.')
             ->and($call['arguments']['category'])->toBe('acme-content')
             ->and($call['arguments']['input_schema'])
-            ->toBe(['type' => 'object', 'additionalProperties' => false]);
+            ->toBe(['type' => 'object', 'additionalProperties' => false, 'default' => []]);
+    });
+
+    it('publishes an empty default input when no property is required, so a call without input is accepted', function (): void {
+        $schema = captureAbilityRegistration(anAbilityWithInputSchema([
+            'type' => 'object',
+            'properties' => ['limit' => ['type' => 'integer']],
+        ]))['arguments']['input_schema'];
+
+        expect($schema['default'])->toBe([]);
+    });
+
+    it('publishes no default input when a property is required, so its absence is still reported', function (): void {
+        $schema = captureAbilityRegistration(anAbilityWithInputSchema([
+            'type' => 'object',
+            'properties' => ['title' => ['type' => 'string']],
+            'required' => ['title'],
+        ]))['arguments']['input_schema'];
+
+        expect($schema)->not->toHaveKey('default');
+    });
+
+    it('keeps a default the input schema already declares', function (): void {
+        $schema = captureAbilityRegistration(anAbilityWithInputSchema([
+            'type' => 'object',
+            'properties' => ['limit' => ['type' => 'integer']],
+            'default' => ['limit' => 3],
+        ]))['arguments']['input_schema'];
+
+        expect($schema['default'])->toBe(['limit' => 3]);
     });
 
     it('wraps the raw input before the body sees it', function (): void {
@@ -51,6 +80,7 @@ describe('WordPressAbilityRegistrar', function (): void {
     })->with([
         [Behaviour::Reads, ['readonly' => true, 'destructive' => false, 'idempotent' => true]],
         [Behaviour::Creates, ['readonly' => false, 'destructive' => false, 'idempotent' => false]],
+        [Behaviour::Updates, ['readonly' => false, 'destructive' => true, 'idempotent' => true]],
         [Behaviour::Deletes, ['readonly' => false, 'destructive' => true, 'idempotent' => true]],
     ]);
 
